@@ -1,0 +1,169 @@
+import tkinter as tk
+from tkinter import ttk, messagebox, simpledialog
+import csv
+import os
+
+# Функція для додавання нового контакту
+def add_contact():
+    name = name_entry.get()
+    address = address_entry.get()
+    email = email_entry.get()
+    mobile_phone = mobile_entry.get()
+    home_phone = home_entry.get()
+
+    with open('contacts.csv', mode='a', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        writer.writerow([name, address, email, mobile_phone, home_phone])
+
+    messagebox.showinfo("Успіх", "Контакт успішно доданий")
+    clear_entries()
+    view_contacts()
+
+# Функція для видалення контакту
+def delete_contact():
+    selected_contact = contact_list.curselection()  # Отримати індекс обраного контакту
+    if selected_contact:
+        name_to_delete = contact_list.get(selected_contact[0]).split(", ")[0]  # Отримати ПІБ контакту
+        with open('contacts.csv', mode='r', encoding='utf-8') as file:
+            reader = csv.reader(file)
+            contacts = list(reader)
+
+        updated_contacts = [contact for contact in contacts if contact[0] != name_to_delete]
+
+        with open('contacts.csv', mode='w', newline='', encoding='utf-8') as file:
+            writer = csv.writer(file)
+            writer.writerows(updated_contacts)
+
+        messagebox.showinfo("Успіх", "Контакт успішно видалений")
+        view_contacts()  # Оновити список контактів після видалення
+
+# Функція для редагування контакту
+def edit_contact():
+    selected_contact = contact_list.curselection()  # Отримати індекс обраного контакту
+    if selected_contact:
+        name_to_edit = contact_list.get(selected_contact[0]).split(", ")[0]  # Отримати ПІБ контакту
+        with open('contacts.csv', mode='r', encoding='utf-8') as file:
+            reader = csv.reader(file)
+            contacts = list(reader)
+
+        for contact in contacts:
+            if contact[0] == name_to_edit:
+                name_entry.delete(0, tk.END)
+                address_entry.delete(0, tk.END)
+                email_entry.delete(0, tk.END)
+                mobile_entry.delete(0, tk.END)
+                home_entry.delete(0, tk.END)
+                name_entry.insert(tk.END, contact[0])
+                address_entry.insert(tk.END, contact[1])
+                email_entry.insert(tk.END, contact[2])
+                mobile_entry.insert(tk.END, contact[3])
+                home_entry.insert(tk.END, contact[4])
+                break
+
+# Функція для збереження змін після редагування
+def save_changes():
+    selected_contact = contact_list.curselection()  # Отримати індекс обраного контакту
+    if selected_contact:
+        name_to_edit = contact_list.get(selected_contact[0]).split(", ")[0]  # Отримати ПІБ контакту
+        new_name = name_entry.get()
+        new_address = address_entry.get()
+        new_email = email_entry.get()
+        new_mobile_phone = mobile_entry.get()
+        new_home_phone = home_entry.get()
+
+        with open('contacts.csv', mode='r', encoding='utf-8') as file:
+            reader = csv.reader(file)
+            contacts = list(reader)
+
+        updated_contacts = []
+        for contact in contacts:
+            if contact[0] == name_to_edit:
+                updated_contacts.append([new_name, new_address, new_email, new_mobile_phone, new_home_phone])
+            else:
+                updated_contacts.append(contact)
+
+        with open('contacts.csv', mode='w', newline='', encoding='utf-8') as file:
+            writer = csv.writer(file)
+            writer.writerows(updated_contacts)
+
+        messagebox.showinfo("Успіх", "Зміни збережено")
+        clear_entries()
+        view_contacts()  # Оновити список контактів після змін
+
+# Функція для очищення текстових полів введення
+def clear_entries():
+    name_entry.delete(0, tk.END)
+    address_entry.delete(0, tk.END)
+    email_entry.delete(0, tk.END)
+    mobile_entry.delete(0, tk.END)
+    home_entry.delete(0, tk.END)
+
+# Функція для відображення всіх контактів
+def view_contacts():
+    contact_list.delete(0, tk.END)  # Очистити список контактів
+    with open('contacts.csv', mode='r', encoding='utf-8') as file:
+        reader = csv.reader(file)
+        contacts = list(reader)
+        contacts.sort(key=lambda x: x[0])  # Сортування контактів за ПІБ
+
+    for contact in contacts:
+        contact_list.insert(tk.END, ", ".join(contact))
+
+# Створення вікна
+window = tk.Tk()
+window.title("Телефонний довідник")
+
+# Створення стилю для красивіших елементів керування
+style = ttk.Style()
+style.configure('TButton', font=('Arial', 12))
+style.configure('TLabel', font=('Arial', 12))
+style.configure('TEntry', font=('Arial', 12))
+style.configure('TListbox', font=('Arial', 12))
+
+# Інтерфейс для введення даних нового контакту
+tk.Label(window, text="ПІБ:").grid(row=0, column=0, pady=5)
+tk.Label(window, text="Адреса:").grid(row=1, column=0, pady=5)
+tk.Label(window, text="Електронна пошта:").grid(row=2, column=0, pady=5)
+tk.Label(window, text="Мобільний телефон:").grid(row=3, column=0, pady=5)
+tk.Label(window, text="Домашній телефон:").grid(row=4, column=0, pady=5)
+
+name_entry = ttk.Entry(window)
+name_entry.grid(row=0, column=1, pady=5)
+address_entry = ttk.Entry(window)
+address_entry.grid(row=1, column=1, pady=5)
+email_entry = ttk.Entry(window)
+email_entry.grid(row=2, column=1, pady=5)
+mobile_entry = ttk.Entry(window)
+mobile_entry.grid(row=3, column=1, pady=5)
+home_entry = ttk.Entry(window)
+home_entry.grid(row=4, column=1, pady=5)
+
+# Кнопка для додавання контакту
+add_button = ttk.Button(window, text="Додати контакт", command=add_contact)
+add_button.grid(row=5, column=0, columnspan=2, pady=10)
+
+# Поле для пошуку контактів
+search_entry = ttk.Entry(window)
+search_entry.grid(row=6, column=0, pady=5)
+search_button = ttk.Button(window, text="Пошук", command=delete_contact)
+search_button.grid(row=6, column=1, pady=5, padx=5)
+
+# Список контактів
+contact_list = tk.Listbox(window, width=50, height=10)
+contact_list.grid(row=7, column=0, columnspan=2, pady=5)
+
+# Кнопка для видалення контакту
+delete_button = ttk.Button(window, text="Видалити контакт", command=delete_contact)
+delete_button.grid(row=8, column=0, columnspan=2, pady=5)
+
+# Кнопка для редагування контакту
+edit_button = ttk.Button(window, text="Редагувати контакт", command=edit_contact)
+edit_button.grid(row=9, column=0, columnspan=2, pady=5)
+
+# Кнопка для збереження змін після редагування
+save_button = ttk.Button(window, text="Зберегти зміни", command=save_changes)
+save_button.grid(row=10, column=0, columnspan=2, pady=5)
+
+view_contacts()  # Відобразити контакти при запуску програми
+
+window.mainloop()
